@@ -26,7 +26,7 @@ Ved brudd på norsk lov, foreningens vedtekter eller retningslinjer kan styret i
 
 ### Bakgrunn for endringen
 
-[Følgende](https://discord.com/channels/747542543750660178/747542544103112806/1340025682855723019) ble skrevet av Mathias Morsund på Discordserveren:
+[Følgende](https://discord.com/channels/747542543750660178/747542544103112806/1336414205192175656) ble skrevet av Mathias Morsund på Discordserveren:
 
 ```
 ...
