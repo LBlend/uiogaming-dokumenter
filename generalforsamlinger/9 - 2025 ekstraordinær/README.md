@@ -1,6 +1,6 @@
 ## Hvorfor mangler denne generalforsmalingen dokumenter?
 
-Siden denne var ekstraordinær ble det aldri produsert noen ordentlige dokumenter, selv om det kanskje burde det. Dette er dessverre ute av min (Leander Furumo) kontroll da jeg ikke sitter i styret og vedlikeholder dette arkivet selv. Jeg har lagt ved enn jeg kan inn her, samt ellers i mappa. Som du kan se er ikke referatet akkurat et ordentlig referat, og jeg har heller ikke fått en signert versjon...
+Siden denne var ekstraordinær ble det aldri produsert noen ordentlige dokumenter, selv om det kanskje burde det. Dette er dessverre ute av min (Leander Furumo) kontroll da jeg ikke sitter i styret lenger. Jeg vedlikeholder dette arkivet selv. Jeg har lagt inn hva enn jeg kan inn her, samt ellers i mappa. Som du kan se er ikke referatet akkurat et ordentlig referat, og jeg har heller ikke fått en signert versjon...
 
 ## Endringsforslag
 
