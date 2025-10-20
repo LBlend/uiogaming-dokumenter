@@ -1,0 +1,504 @@
+name: Compile LaTeX Documents
+
+on:
+  push:
+    paths:
+      - "styrende dokumenter/vedtekter/**/*.tex"
+      - "styrende dokumenter/vedtekter/**/*.png"
+      - "styrende dokumenter/vedtekter/**/*.jpg"
+      - "styrende dokumenter/vedtekter/**/*.jpeg"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "styrende dokumenter/vedtekter/**/*.tex"
+      - "styrende dokumenter/vedtekter/**/*.png"
+      - "styrende dokumenter/vedtekter/**/*.jpg"
+      - "styrende dokumenter/vedtekter/**/*.jpeg"
+  workflow_dispatch:
+
+jobs:
+  compile-latex:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Archive current PDFs
+        run: |
+          # Function to get the next version number for Norwegian
+          get_next_norwegian_version() {
+            local max_version=0
+            for file in styrende\ dokumenter/vedtekter/utgåtte/*.pdf; do
+              if [[ -f "$file" ]]; then
+                # Extract version number from filename like "8 - Vedtekter UiO Gaming (15.10.2024 - 21.02.2025).pdf"
+                if [[ "$file" =~ ([0-9]+)\ -\ Vedtekter ]]; then
+                  local version="${BASH_REMATCH[1]}"
+                  if [ "$version" -gt "$max_version" ]; then
+                    max_version=$version
+                  fi
+                fi
+              fi
+            done
+            echo $((max_version + 1))
+          }
+
+          # Function to get the next version number for English
+          get_next_english_version() {
+            local max_version=0
+            for file in styrende\ dokumenter/vedtekter/english/old/*.pdf; do
+              if [[ -f "$file" ]]; then
+                # Extract version number from filename like "2 - Statutes UiO Gaming (2024-10-15 - 2025-02-21).pdf"
+                if [[ "$file" =~ ([0-9]+)\ -\ Statutes ]]; then
+                  local version="${BASH_REMATCH[1]}"
+                  if [ "$version" -gt "$max_version" ]; then
+                    max_version=$version
+                  fi
+                fi
+              fi
+            done
+            echo $((max_version + 1))
+          }
+
+          # Function to extract date from Norwegian front page (for filename)
+          extract_norwegian_date_filename() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Sist revidert:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) ]]; then
+              local day="${BASH_REMATCH[1]}"
+              local month="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              echo "${day}.${month}.${year}"
+            else
+              echo "$(date +"%d.%m.%Y")"
+            fi
+          }
+
+          # Function to extract date from English front page (for filename)
+          extract_english_date_filename() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Last changed:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([A-Za-z]+)\ ([0-9]{1,2}),\ ([0-9]{4}) ]]; then
+              local month_name="${BASH_REMATCH[1]}"
+              local day="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              
+              # Convert month name to number
+              case "${month_name,,}" in
+                "january") month="01" ;;
+                "february") month="02" ;;
+                "march") month="03" ;;
+                "april") month="04" ;;
+                "may") month="05" ;;
+                "june") month="06" ;;
+                "july") month="07" ;;
+                "august") month="08" ;;
+                "september") month="09" ;;
+                "october") month="10" ;;
+                "november") month="11" ;;
+                "december") month="12" ;;
+                *) month="01" ;;
+              esac
+              
+              # Pad day with leading zero if needed
+              day=$(printf "%02d" "$day")
+              echo "${year}-${month}-${day}"
+            else
+              echo "$(date +"%Y-%m-%d")"
+            fi
+          }
+
+          # Function to extract date for metadata (ISO format)
+          extract_norwegian_date_metadata() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Sist revidert:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) ]]; then
+              local day="${BASH_REMATCH[1]}"
+              local month="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              echo "${year}:${month}:${day} 00:00:00"
+            else
+              echo "$(date -u +"%Y:%m:%d %H:%M:%S")"
+            fi
+          }
+
+          # Function to extract date for metadata (ISO format)
+          extract_english_date_metadata() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Last changed:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([A-Za-z]+)\ ([0-9]{1,2}),\ ([0-9]{4}) ]]; then
+              local month_name="${BASH_REMATCH[1]}"
+              local day="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              
+              # Convert month name to number
+              case "${month_name,,}" in
+                "january") month="01" ;;
+                "february") month="02" ;;
+                "march") month="03" ;;
+                "april") month="04" ;;
+                "may") month="05" ;;
+                "june") month="06" ;;
+                "july") month="07" ;;
+                "august") month="08" ;;
+                "september") month="09" ;;
+                "october") month="10" ;;
+                "november") month="11" ;;
+                "december") month="12" ;;
+                *) month="01" ;;
+              esac
+              
+              # Pad day with leading zero if needed
+              day=$(printf "%02d" "$day")
+              echo "${year}:${month}:${day} 00:00:00"
+            else
+              echo "$(date -u +"%Y:%m:%d %H:%M:%S")"
+            fi
+          }
+
+          # Function to add metadata to PDF
+          add_metadata() {
+            local pdf_file="$1"
+            local title="$2"
+            local author="$3"
+            local subject="$4"
+            local creator="$5"
+            local producer="$6"
+            local creation_date="$7"
+            local modify_date="$8"
+            
+            exiftool -overwrite_original \
+              -Title="$title" \
+              -Author="$author" \
+              -Subject="$subject" \
+              -Creator="$creator" \
+              -Producer="$producer" \
+              -CreateDate="$creation_date" \
+              -ModifyDate="$modify_date" \
+              -PDF:Title="$title" \
+              -PDF:Author="$author" \
+              -PDF:Subject="$subject" \
+              -PDF:Creator="$creator" \
+              -PDF:Producer="$producer" \
+              -PDF:CreationDate="$creation_date" \
+              -PDF:ModDate="$modify_date" \
+              "$pdf_file"
+          }
+
+          # Archive Norwegian PDF if it exists
+          if [ -f styrende\ dokumenter/vedtekter/nå/latex/main.pdf ]; then
+            echo "Archiving Norwegian PDF..."
+            
+            # Get current date from front page
+            current_date=$(extract_norwegian_date_filename styrende\ dokumenter/vedtekter/nå/latex/front_page.tex)
+            
+            # Get the last archived date to create the date range
+            last_archived_date=""
+            for file in styrende\ dokumenter/vedtekter/utgåtte/*.pdf; do
+              if [[ -f "$file" ]]; then
+                # Extract end date from filename like "8 - Vedtekter UiO Gaming (15.10.2024 - 21.02.2025).pdf"
+                if [[ "$file" =~ \(([0-9]{2}\.[0-9]{2}\.[0-9]{4})\ -\ ([0-9]{2}\.[0-9]{2}\.[0-9]{4})\) ]]; then
+                  local end_date="${BASH_REMATCH[2]}"
+                  if [ -z "$last_archived_date" ] || [ "$end_date" \> "$last_archived_date" ]; then
+                    last_archived_date="$end_date"
+                  fi
+                fi
+              fi
+            done
+            
+            # If no previous archive found, use a default start date
+            if [ -z "$last_archived_date" ]; then
+              last_archived_date="01.01.2000"  # Default fallback
+            fi
+            
+            # Get next version number
+            next_version=$(get_next_norwegian_version)
+            
+            # Create new filename
+            new_filename="${next_version} - Vedtekter UiO Gaming (${last_archived_date} - ${current_date}).pdf"
+            
+            # Copy and rename the file
+            cp styrende\ dokumenter/vedtekter/nå/latex/main.pdf styrende\ dokumenter/vedtekter/utgåtte/${new_filename}
+            
+            # Update metadata for archived file
+            archived_date=$(extract_norwegian_date_metadata styrende\ dokumenter/vedtekter/nå/latex/front_page.tex)
+            current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
+            
+            add_metadata \
+              styrende\ dokumenter/vedtekter/utgåtte/${new_filename} \
+              "Vedtekter UiO Gaming (${last_archived_date} - ${current_date})" \
+              "UiO Gaming" \
+              "Vedtekter UiO Gaming (${last_archived_date} til ${current_date})" \
+              "LaTeX" \
+              "GitHub Actions" \
+              "$current_timestamp" \
+              "$archived_date"
+            
+            echo "Archived Norwegian PDF as: ${new_filename}"
+          fi
+
+          # Archive English PDF if it exists
+          if [ -f styrende\ dokumenter/vedtekter/english/active/latex/main.pdf ]; then
+            echo "Archiving English PDF..."
+            
+            # Get current date from front page
+            current_date=$(extract_english_date_filename styrende\ dokumenter/vedtekter/english/active/latex/front_page.tex)
+            
+            # Get the last archived date to create the date range
+            last_archived_date=""
+            for file in styrende\ dokumenter/vedtekter/english/old/*.pdf; do
+              if [[ -f "$file" ]]; then
+                # Extract end date from filename like "2 - Statutes UiO Gaming (2024-10-15 - 2025-02-21).pdf"
+                if [[ "$file" =~ \(([0-9]{4}-[0-9]{2}-[0-9]{2})\ -\ ([0-9]{4}-[0-9]{2}-[0-9]{2})\) ]]; then
+                  local end_date="${BASH_REMATCH[2]}"
+                  if [ -z "$last_archived_date" ] || [ "$end_date" \> "$last_archived_date" ]; then
+                    last_archived_date="$end_date"
+                  fi
+                fi
+              fi
+            done
+            
+            # If no previous archive found, use a default start date
+            if [ -z "$last_archived_date" ]; then
+              last_archived_date="2000-01-01"  # Default fallback
+            fi
+            
+            # Get next version number
+            next_version=$(get_next_english_version)
+            
+            # Create new filename
+            new_filename="${next_version} - Statutes UiO Gaming (${last_archived_date} - ${current_date}).pdf"
+            
+            # Copy and rename the file
+            cp styrende\ dokumenter/vedtekter/english/active/latex/main.pdf styrende\ dokumenter/vedtekter/english/old/${new_filename}
+            
+            # Update metadata for archived file
+            archived_date=$(extract_english_date_metadata styrende\ dokumenter/vedtekter/english/active/latex/front_page.tex)
+            current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
+            
+            add_metadata \
+              styrende\ dokumenter/vedtekter/english/old/${new_filename} \
+              "Statutes of UiO Gaming (${last_archived_date} - ${current_date})" \
+              "UiO Gaming" \
+              "Statutes of UiO Gaming (${last_archived_date} to ${current_date})" \
+              "LaTeX" \
+              "GitHub Actions" \
+              "$current_timestamp" \
+              "$archived_date"
+            
+            echo "Archived English PDF as: ${new_filename}"
+          fi
+
+      - name: Install exiftool
+        run: |
+          apt-get update -y
+          apt-get install -y exiftool
+
+      - name: Compile Norwegian LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: styrende dokumenter/vedtekter/nå/latex/main.tex
+          latexmk_use_xelatex: false
+          work_in_root_file_dir: true
+          extra_args: "-interaction=nonstopmode -file-line-error"
+
+      - name: Compile English LaTeX document
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: styrende dokumenter/vedtekter/english/active/latex/main.tex
+          latexmk_use_xelatex: false
+          work_in_root_file_dir: true
+          extra_args: "-interaction=nonstopmode -file-line-error"
+
+      - name: Add metadata to new PDFs
+        run: |
+          # Function to add metadata to PDF (reuse from above)
+          add_metadata() {
+            local pdf_file="$1"
+            local title="$2"
+            local author="$3"
+            local subject="$4"
+            local creator="$5"
+            local producer="$6"
+            local creation_date="$7"
+            local modify_date="$8"
+            
+            exiftool -overwrite_original \
+              -Title="$title" \
+              -Author="$author" \
+              -Subject="$subject" \
+              -Creator="$creator" \
+              -Producer="$producer" \
+              -CreateDate="$creation_date" \
+              -ModifyDate="$modify_date" \
+              -PDF:Title="$title" \
+              -PDF:Author="$author" \
+              -PDF:Subject="$subject" \
+              -PDF:Creator="$creator" \
+              -PDF:Producer="$producer" \
+              -PDF:CreationDate="$creation_date" \
+              -PDF:ModDate="$modify_date" \
+              "$pdf_file"
+          }
+
+          # Function to extract date from Norwegian front page (for filename)
+          extract_norwegian_date_filename() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Sist revidert:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) ]]; then
+              local day="${BASH_REMATCH[1]}"
+              local month="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              echo "${day}.${month}.${year}"
+            else
+              echo "$(date +"%d.%m.%Y")"
+            fi
+          }
+
+          # Function to extract date from English front page (for filename)
+          extract_english_date_filename() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Last changed:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([A-Za-z]+)\ ([0-9]{1,2}),\ ([0-9]{4}) ]]; then
+              local month_name="${BASH_REMATCH[1]}"
+              local day="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              
+              # Convert month name to number
+              case "${month_name,,}" in
+                "january") month="01" ;;
+                "february") month="02" ;;
+                "march") month="03" ;;
+                "april") month="04" ;;
+                "may") month="05" ;;
+                "june") month="06" ;;
+                "july") month="07" ;;
+                "august") month="08" ;;
+                "september") month="09" ;;
+                "october") month="10" ;;
+                "november") month="11" ;;
+                "december") month="12" ;;
+                *) month="01" ;;
+              esac
+              
+              # Pad day with leading zero if needed
+              day=$(printf "%02d" "$day")
+              echo "${year}-${month}-${day}"
+            else
+              echo "$(date +"%Y-%m-%d")"
+            fi
+          }
+
+          # Function to extract date for metadata (ISO format)
+          extract_norwegian_date_metadata() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Sist revidert:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([0-9]{2})\.([0-9]{2})\.([0-9]{4}) ]]; then
+              local day="${BASH_REMATCH[1]}"
+              local month="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              echo "${year}:${month}:${day} 00:00:00"
+            else
+              echo "$(date -u +"%Y:%m:%d %H:%M:%S")"
+            fi
+          }
+
+          # Function to extract date for metadata (ISO format)
+          extract_english_date_metadata() {
+            local front_page_file="$1"
+            local date_line=$(grep -A1 "Last changed:" "$front_page_file" | tail -n1 | xargs)
+            if [[ "$date_line" =~ ([A-Za-z]+)\ ([0-9]{1,2}),\ ([0-9]{4}) ]]; then
+              local month_name="${BASH_REMATCH[1]}"
+              local day="${BASH_REMATCH[2]}"
+              local year="${BASH_REMATCH[3]}"
+              
+              # Convert month name to number
+              case "${month_name,,}" in
+                "january") month="01" ;;
+                "february") month="02" ;;
+                "march") month="03" ;;
+                "april") month="04" ;;
+                "may") month="05" ;;
+                "june") month="06" ;;
+                "july") month="07" ;;
+                "august") month="08" ;;
+                "september") month="09" ;;
+                "october") month="10" ;;
+                "november") month="11" ;;
+                "december") month="12" ;;
+                *) month="01" ;;
+              esac
+              
+              # Pad day with leading zero if needed
+              day=$(printf "%02d" "$day")
+              echo "${year}:${month}:${day} 00:00:00"
+            else
+              echo "$(date -u +"%Y:%m:%d %H:%M:%S")"
+            fi
+          }
+
+          # Add metadata to Norwegian PDF
+          if [ -f "styrende dokumenter/vedtekter/nå/latex/main.pdf" ]; then
+            echo "Adding metadata to Norwegian PDF..."
+            
+            # Get current date from front page
+            current_date=$(extract_norwegian_date_filename "styrende dokumenter/vedtekter/nå/latex/front_page.tex")
+            current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
+            document_date=$(extract_norwegian_date_metadata "styrende dokumenter/vedtekter/nå/latex/front_page.tex")
+            
+            add_metadata \
+              "styrende dokumenter/vedtekter/nå/latex/main.pdf" \
+              "Vedtekter UiO Gaming (${current_date} - )" \
+              "UiO Gaming" \
+              "Vedtekter UiO Gaming (gyldig fra ${current_date})" \
+              "LaTeX" \
+              "GitHub Actions" \
+              "$current_timestamp" \
+              "$document_date"
+            
+            # Copy to the main directory with proper naming
+            cp "styrende dokumenter/vedtekter/nå/latex/main.pdf" "styrende dokumenter/vedtekter/nå/Vedtekter UiO Gaming (${current_date} - ).pdf"
+            
+            echo "Norwegian PDF created with metadata: Vedtekter UiO Gaming (${current_date} - ).pdf"
+          fi
+
+          # Add metadata to English PDF
+          if [ -f "styrende dokumenter/vedtekter/english/active/latex/main.pdf" ]; then
+            echo "Adding metadata to English PDF..."
+            
+            # Get current date from front page
+            current_date=$(extract_english_date_filename "styrende dokumenter/vedtekter/english/active/latex/front_page.tex")
+            current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
+            document_date=$(extract_english_date_metadata "styrende dokumenter/vedtekter/english/active/latex/front_page.tex")
+            
+            add_metadata \
+              "styrende dokumenter/vedtekter/english/active/latex/main.pdf" \
+              "Statutes of UiO Gaming (${current_date} - )" \
+              "UiO Gaming" \
+              "Statutes of UiO Gaming (valid from ${current_date})" \
+              "LaTeX" \
+              "GitHub Actions" \
+              "$current_timestamp" \
+              "$document_date"
+            
+            # Copy to the main directory with proper naming
+            cp "styrende dokumenter/vedtekter/english/active/latex/main.pdf" "styrende dokumenter/vedtekter/english/active/Statutes UiO Gaming (${current_date} - ).pdf"
+            
+            echo "English PDF created with metadata: Statutes UiO Gaming (${current_date} - ).pdf"
+          fi
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Add all changes
+          git add -A
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-compile LaTeX documents and update PDFs"
+            git push
+          fi
