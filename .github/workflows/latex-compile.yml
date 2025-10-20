@@ -301,7 +301,7 @@ jobs:
             "styrende/vedtekter/na/latex/main.tex"
             "styrende/vedtekter/na/latex/front_page.tex"
           latexmk_use_xelatex: false
-          work_in_root_file_dir: true
+          work_in_root_file_dir: false
 
       - name: Compile English LaTeX document
         uses: xu-cheng/latex-action@v3
@@ -310,7 +310,7 @@ jobs:
             "styrende/vedtekter/english/active/latex/main.tex"
             "styrende/vedtekter/english/active/latex/front_page.tex"
           latexmk_use_xelatex: false
-          work_in_root_file_dir: true
+          work_in_root_file_dir: false
 
       - name: Add metadata to new PDFs
         run: |
