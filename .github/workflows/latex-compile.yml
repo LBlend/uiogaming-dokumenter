@@ -297,7 +297,7 @@ jobs:
       - name: Compile Norwegian LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: styrende dokumenter/vedtekter/nå/latex/main.tex
+          root_file: "styrende dokumenter/vedtekter/nå/latex/main.tex"
           latexmk_use_xelatex: false
           work_in_root_file_dir: true
           extra_args: "-interaction=nonstopmode -file-line-error"
@@ -305,7 +305,7 @@ jobs:
       - name: Compile English LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: styrende dokumenter/vedtekter/english/active/latex/main.tex
+          root_file: "styrende dokumenter/vedtekter/english/active/latex/main.tex"
           latexmk_use_xelatex: false
           work_in_root_file_dir: true
           extra_args: "-interaction=nonstopmode -file-line-error"
