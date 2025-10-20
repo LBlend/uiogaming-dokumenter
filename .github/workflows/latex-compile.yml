@@ -297,20 +297,16 @@ jobs:
       - name: Compile Norwegian LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: |
-            styrende/vedtekter/na/latex/main.tex
-            styrende/vedtekter/na/latex/front_page.tex
+          root_file: styrende/vedtekter/na/latex/main.tex
           latexmk_use_xelatex: false
-          work_in_root_file_dir: false
+          work_in_root_file_dir: true
 
       - name: Compile English LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: |
-            styrende/vedtekter/english/active/latex/main.tex
-            styrende/vedtekter/english/active/latex/front_page.tex
+          root_file: styrende/vedtekter/english/active/latex/main.tex
           latexmk_use_xelatex: false
-          work_in_root_file_dir: false
+          work_in_root_file_dir: true
 
       - name: Add metadata to new PDFs
         run: |
