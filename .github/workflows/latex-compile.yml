@@ -3,17 +3,17 @@ name: Compile LaTeX Documents
 on:
   push:
     paths:
-      - "styrende dokumenter/vedtekter/**/*.tex"
-      - "styrende dokumenter/vedtekter/**/*.png"
-      - "styrende dokumenter/vedtekter/**/*.jpg"
-      - "styrende dokumenter/vedtekter/**/*.jpeg"
+      - "styrende/vedtekter/**/*.tex"
+      - "styrende/vedtekter/**/*.png"
+      - "styrende/vedtekter/**/*.jpg"
+      - "styrende/vedtekter/**/*.jpeg"
   pull_request:
     branches: [main, master]
     paths:
-      - "styrende dokumenter/vedtekter/**/*.tex"
-      - "styrende dokumenter/vedtekter/**/*.png"
-      - "styrende dokumenter/vedtekter/**/*.jpg"
-      - "styrende dokumenter/vedtekter/**/*.jpeg"
+      - "styrende/vedtekter/**/*.tex"
+      - "styrende/vedtekter/**/*.png"
+      - "styrende/vedtekter/**/*.jpg"
+      - "styrende/vedtekter/**/*.jpeg"
   workflow_dispatch:
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
           # Function to get the next version number for Norwegian
           get_next_norwegian_version() {
             local max_version=0
-            for file in styrende\ dokumenter/vedtekter/utgåtte/*.pdf; do
+            for file in styrende/vedtekter/utgåtte/*.pdf; do
               if [[ -f "$file" ]]; then
                 # Extract version number from filename like "8 - Vedtekter UiO Gaming (15.10.2024 - 21.02.2025).pdf"
                 if [[ "$file" =~ ([0-9]+)\ -\ Vedtekter ]]; then
@@ -46,7 +46,7 @@ jobs:
           # Function to get the next version number for English
           get_next_english_version() {
             local max_version=0
-            for file in styrende\ dokumenter/vedtekter/english/old/*.pdf; do
+            for file in styrende/vedtekter/english/old/*.pdf; do
               if [[ -f "$file" ]]; then
                 # Extract version number from filename like "2 - Statutes UiO Gaming (2024-10-15 - 2025-02-21).pdf"
                 if [[ "$file" =~ ([0-9]+)\ -\ Statutes ]]; then
@@ -186,15 +186,15 @@ jobs:
           }
 
           # Archive Norwegian PDF if it exists
-          if [ -f styrende\ dokumenter/vedtekter/nå/latex/main.pdf ]; then
+          if [ -f styrende/vedtekter/na/latex/main.pdf ]; then
             echo "Archiving Norwegian PDF..."
             
             # Get current date from front page
-            current_date=$(extract_norwegian_date_filename styrende\ dokumenter/vedtekter/nå/latex/front_page.tex)
+            current_date=$(extract_norwegian_date_filename styrende/vedtekter/na/latex/front_page.tex)
             
             # Get the last archived date to create the date range
             last_archived_date=""
-            for file in styrende\ dokumenter/vedtekter/utgåtte/*.pdf; do
+            for file in styrende/vedtekter/utgåtte/*.pdf; do
               if [[ -f "$file" ]]; then
                 # Extract end date from filename like "8 - Vedtekter UiO Gaming (15.10.2024 - 21.02.2025).pdf"
                 if [[ "$file" =~ \(([0-9]{2}\.[0-9]{2}\.[0-9]{4})\ -\ ([0-9]{2}\.[0-9]{2}\.[0-9]{4})\) ]]; then
@@ -218,14 +218,14 @@ jobs:
             new_filename="${next_version} - Vedtekter UiO Gaming (${last_archived_date} - ${current_date}).pdf"
             
             # Copy and rename the file
-            cp styrende\ dokumenter/vedtekter/nå/latex/main.pdf styrende\ dokumenter/vedtekter/utgåtte/${new_filename}
+            cp styrende/vedtekter/na/latex/main.pdf styrende/vedtekter/utgåtte/${new_filename}
             
             # Update metadata for archived file
-            archived_date=$(extract_norwegian_date_metadata styrende\ dokumenter/vedtekter/nå/latex/front_page.tex)
+            archived_date=$(extract_norwegian_date_metadata styrende/vedtekter/na/latex/front_page.tex)
             current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
             
             add_metadata \
-              styrende\ dokumenter/vedtekter/utgåtte/${new_filename} \
+              styrende/vedtekter/utgåtte/${new_filename} \
               "Vedtekter UiO Gaming (${last_archived_date} - ${current_date})" \
               "UiO Gaming" \
               "Vedtekter UiO Gaming (${last_archived_date} til ${current_date})" \
@@ -238,15 +238,15 @@ jobs:
           fi
 
           # Archive English PDF if it exists
-          if [ -f styrende\ dokumenter/vedtekter/english/active/latex/main.pdf ]; then
+          if [ -f styrende/vedtekter/english/active/latex/main.pdf ]; then
             echo "Archiving English PDF..."
             
             # Get current date from front page
-            current_date=$(extract_english_date_filename styrende\ dokumenter/vedtekter/english/active/latex/front_page.tex)
+            current_date=$(extract_english_date_filename styrende/vedtekter/english/active/latex/front_page.tex)
             
             # Get the last archived date to create the date range
             last_archived_date=""
-            for file in styrende\ dokumenter/vedtekter/english/old/*.pdf; do
+            for file in styrende/vedtekter/english/old/*.pdf; do
               if [[ -f "$file" ]]; then
                 # Extract end date from filename like "2 - Statutes UiO Gaming (2024-10-15 - 2025-02-21).pdf"
                 if [[ "$file" =~ \(([0-9]{4}-[0-9]{2}-[0-9]{2})\ -\ ([0-9]{4}-[0-9]{2}-[0-9]{2})\) ]]; then
@@ -270,14 +270,14 @@ jobs:
             new_filename="${next_version} - Statutes UiO Gaming (${last_archived_date} - ${current_date}).pdf"
             
             # Copy and rename the file
-            cp styrende\ dokumenter/vedtekter/english/active/latex/main.pdf styrende\ dokumenter/vedtekter/english/old/${new_filename}
+            cp styrende/vedtekter/english/active/latex/main.pdf styrende/vedtekter/english/old/${new_filename}
             
             # Update metadata for archived file
-            archived_date=$(extract_english_date_metadata styrende\ dokumenter/vedtekter/english/active/latex/front_page.tex)
+            archived_date=$(extract_english_date_metadata styrende/vedtekter/english/active/latex/front_page.tex)
             current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
             
             add_metadata \
-              styrende\ dokumenter/vedtekter/english/old/${new_filename} \
+              styrende/vedtekter/english/old/${new_filename} \
               "Statutes of UiO Gaming (${last_archived_date} - ${current_date})" \
               "UiO Gaming" \
               "Statutes of UiO Gaming (${last_archived_date} to ${current_date})" \
@@ -297,18 +297,16 @@ jobs:
       - name: Compile Norwegian LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: "styrende\ dokumenter/vedtekter/nå/latex/main.tex"
+          root_file: "styrende/vedtekter/na/latex/main.tex"
           latexmk_use_xelatex: false
-          work_in_root_file_dir: true
-          extra_args: "-interaction=nonstopmode -file-line-error"
+          work_in_root_file_dir: false
 
       - name: Compile English LaTeX document
         uses: xu-cheng/latex-action@v3
         with:
-          root_file: "styrende\ dokumenter/vedtekter/english/active/latex/main.tex"
+          root_file: "styrende/vedtekter/english/active/latex/main.tex"
           latexmk_use_xelatex: false
-          work_in_root_file_dir: true
-          extra_args: "-interaction=nonstopmode -file-line-error"
+          work_in_root_file_dir: false
 
       - name: Add metadata to new PDFs
         run: |
@@ -438,16 +436,16 @@ jobs:
           }
 
           # Add metadata to Norwegian PDF
-          if [ -f "styrende dokumenter/vedtekter/nå/latex/main.pdf" ]; then
+          if [ -f "styrende/vedtekter/na/latex/main.pdf" ]; then
             echo "Adding metadata to Norwegian PDF..."
             
             # Get current date from front page
-            current_date=$(extract_norwegian_date_filename "styrende dokumenter/vedtekter/nå/latex/front_page.tex")
+            current_date=$(extract_norwegian_date_filename "styrende/vedtekter/na/latex/front_page.tex")
             current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
-            document_date=$(extract_norwegian_date_metadata "styrende dokumenter/vedtekter/nå/latex/front_page.tex")
+            document_date=$(extract_norwegian_date_metadata "styrende/vedtekter/na/latex/front_page.tex")
             
             add_metadata \
-              "styrende dokumenter/vedtekter/nå/latex/main.pdf" \
+              "styrende/vedtekter/na/latex/main.pdf" \
               "Vedtekter UiO Gaming (${current_date} - )" \
               "UiO Gaming" \
               "Vedtekter UiO Gaming (gyldig fra ${current_date})" \
@@ -457,22 +455,22 @@ jobs:
               "$document_date"
             
             # Copy to the main directory with proper naming
-            cp "styrende dokumenter/vedtekter/nå/latex/main.pdf" "styrende dokumenter/vedtekter/nå/Vedtekter UiO Gaming (${current_date} - ).pdf"
+            cp "styrende/vedtekter/na/latex/main.pdf" "styrende/vedtekter/na/Vedtekter UiO Gaming (${current_date} - ).pdf"
             
             echo "Norwegian PDF created with metadata: Vedtekter UiO Gaming (${current_date} - ).pdf"
           fi
 
           # Add metadata to English PDF
-          if [ -f "styrende dokumenter/vedtekter/english/active/latex/main.pdf" ]; then
+          if [ -f "styrende/vedtekter/english/active/latex/main.pdf" ]; then
             echo "Adding metadata to English PDF..."
             
             # Get current date from front page
-            current_date=$(extract_english_date_filename "styrende dokumenter/vedtekter/english/active/latex/front_page.tex")
+            current_date=$(extract_english_date_filename "styrende/vedtekter/english/active/latex/front_page.tex")
             current_timestamp=$(date -u +"%Y:%m:%d %H:%M:%S")
-            document_date=$(extract_english_date_metadata "styrende dokumenter/vedtekter/english/active/latex/front_page.tex")
+            document_date=$(extract_english_date_metadata "styrende/vedtekter/english/active/latex/front_page.tex")
             
             add_metadata \
-              "styrende dokumenter/vedtekter/english/active/latex/main.pdf" \
+              "styrende/vedtekter/english/active/latex/main.pdf" \
               "Statutes of UiO Gaming (${current_date} - )" \
               "UiO Gaming" \
               "Statutes of UiO Gaming (valid from ${current_date})" \
@@ -482,7 +480,7 @@ jobs:
               "$document_date"
             
             # Copy to the main directory with proper naming
-            cp "styrende dokumenter/vedtekter/english/active/latex/main.pdf" "styrende dokumenter/vedtekter/english/active/Statutes UiO Gaming (${current_date} - ).pdf"
+            cp "styrende/vedtekter/english/active/latex/main.pdf" "styrende/vedtekter/english/active/Statutes UiO Gaming (${current_date} - ).pdf"
             
             echo "English PDF created with metadata: Statutes UiO Gaming (${current_date} - ).pdf"
           fi
